@@ -1,0 +1,190 @@
+type AdminChanged @entity(immutable: true) {
+  id: Bytes!
+  previousAdmin: Bytes! # address
+  newAdmin: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BeaconUpgraded @entity(immutable: true) {
+  id: Bytes!
+  beacon: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Initialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OverplusBridged @entity(immutable: true) {
+  id: Bytes!
+  amount: BigInt! # uint256
+  uniqueId: Bytes! # bytes
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolCreated @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  pool_payoutStart: BigInt! # uint128
+  pool_decreaseInterval: BigInt! # uint128
+  pool_withdrawLockPeriod: BigInt! # uint128
+  pool_claimLockPeriod: BigInt! # uint128
+  pool_withdrawLockPeriodAfterStake: BigInt! # uint128
+  pool_initialReward: BigInt! # uint256
+  pool_rewardDecrease: BigInt! # uint256
+  pool_minimalStake: BigInt! # uint256
+  pool_isPublic: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolEdited @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  pool_payoutStart: BigInt! # uint128
+  pool_decreaseInterval: BigInt! # uint128
+  pool_withdrawLockPeriod: BigInt! # uint128
+  pool_claimLockPeriod: BigInt! # uint128
+  pool_withdrawLockPeriodAfterStake: BigInt! # uint128
+  pool_initialReward: BigInt! # uint256
+  pool_rewardDecrease: BigInt! # uint256
+  pool_minimalStake: BigInt! # uint256
+  pool_isPublic: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Upgraded @entity(immutable: true) {
+  id: Bytes!
+  implementation: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UserClaimed @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  user: Bytes! # address
+  receiver: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UserStaked @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  user: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UserWithdrawn @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  user: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Pool @entity {
+  id: Bytes!
+  payoutStart: BigInt!
+  decreaseInterval: BigInt!
+  withdrawLockPeriod: BigInt!
+  claimLockPeriod: BigInt!
+  withdrawLockPeriodAfterStake: BigInt!
+  initialReward: BigInt!
+  rewardDecrease: BigInt!
+  minimalStake: BigInt!
+  isPublic: Boolean!
+
+  totalUsers: BigInt!
+  totalStaked: BigInt!
+
+  interactions: [PoolInteraction!]! @derivedFrom(field: "pool")
+}
+
+type PoolInteraction @entity(immutable: true) {
+  "id forms from tx hash + counter"
+  id: Bytes!
+  "The tx hash"
+  hash: Bytes!
+  "The timestamp of tx"
+  timestamp: BigInt!
+
+  "The pool which was interacted"
+  pool: Pool!
+  "The user who interacted with the pool"
+  userInPool: UserInPool!
+
+  "True if the user staked, false if the user withdrawn"
+  isStake: Boolean!
+  "The amount of staked or withdrawn tokens"
+  amount: BigInt!
+
+  "The total staked amount after interaction"
+  totalStaked: BigInt!
+}
+
+type User @entity {
+  "id forms from user address"
+  id: Bytes!
+
+  totalClaimed: BigInt!
+}
+
+"""
+The entity holds information about user's interaction with the pool
+"""
+type UserInPool @entity {
+  "id forms from user address + pool id"
+  id: Bytes!
+  "The pool which was interacted"
+  pool: Pool!
+  "The user who interacted with the pool"
+  user: Bytes!
+  "The amount of staked tokens"
+  staked: BigInt!
+  "The amount of claimed tokens"
+  claimed: BigInt!
+  "The array of interactions with the pool"
+  interactions: [PoolInteraction!]! @derivedFrom(field: "userInPool")
+}
+
+"""
+The entity counts interactions in single tx
+"""
+type InteractionCount @entity {
+  "The tx hash"
+  id: Bytes!
+  "The counter of interactions in single tx"
+  count: BigInt!
+}

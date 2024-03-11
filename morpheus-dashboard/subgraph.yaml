@@ -1,0 +1,56 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Distribution
+    network: mainnet
+    source:
+      address: "0x47176B2Af9885dC6C4575d4eFd63895f7Aaa4790"
+      abi: Distribution
+      startBlock: 19178637
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminChanged
+        - BeaconUpgraded
+        - Initialized
+        - OverplusBridged
+        - OwnershipTransferred
+        - PoolCreated
+        - PoolEdited
+        - Upgraded
+        - UserClaimed
+        - UserStaked
+        - UserWithdrawn
+      abis:
+        - name: Distribution
+          file: ./abis/Distribution.json
+      eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
+        - event: BeaconUpgraded(indexed address)
+          handler: handleBeaconUpgraded
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OverplusBridged(uint256,bytes)
+          handler: handleOverplusBridged
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: PoolCreated(indexed uint256,(uint128,uint128,uint128,uint128,uint128,uint256,uint256,uint256,bool))
+          handler: handlePoolCreated
+        - event: PoolEdited(indexed uint256,(uint128,uint128,uint128,uint128,uint128,uint256,uint256,uint256,bool))
+          handler: handlePoolEdited
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+        - event: UserClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleUserClaimed
+        - event: UserStaked(indexed uint256,indexed address,uint256)
+          handler: handleUserStaked
+        - event: UserWithdrawn(indexed uint256,indexed address,uint256)
+          handler: handleUserWithdrawn
+      file: ./src/mappings/distribution.ts
