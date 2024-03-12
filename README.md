@@ -1,3 +1,3 @@
-# The Graph template
+# The Graph For Morpheus Smart Contracts
 
-Template The Graph repository for ad-hoc subgraphs development.
+This is the graph for Morpheus Smart Contracts.
