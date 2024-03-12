@@ -1,7 +1,0 @@
-node_modules
-generated/*
-build
-.env
-tests/.bin
-tests/.latest.json
-tests/.docker
