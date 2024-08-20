@@ -1,3 +1,4 @@
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
@@ -10,6 +11,9 @@ import {
   UserClaimed as UserClaimedEvent,
   UserStaked as UserStakedEvent,
   UserWithdrawn as UserWithdrawnEvent,
+  Distribution,
+  Distribution__usersDataResult,
+  UserClaimLocked,
 } from "../../generated/Distribution/Distribution";
 import {
   AdminChanged,
@@ -18,11 +22,13 @@ import {
   OverplusBridged,
   OwnershipTransferred,
   Upgraded,
+  User,
 } from "../../generated/schema";
 import { getPool } from "../entities/Pool";
 import { getPoolInteraction } from "../entities/PoolInteraction";
 import { getUser } from "../entities/User";
 import { getUserInPool } from "../entities/UserInPool";
+import { getUserInteraction } from "../entities/UserInteraction";
 
 export function handleAdminChanged(event: AdminChangedEvent): void {
   let entity = new AdminChanged(event.transaction.hash.concatI32(event.logIndex.toI32()));
@@ -134,6 +140,20 @@ export function handleUserClaimed(event: UserClaimedEvent): void {
   user.totalClaimed = user.totalClaimed.plus(event.params.amount);
   userInPool.claimed = userInPool.claimed.plus(event.params.amount);
 
+  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
+  const userData = _getUserData(event.address, event.params.poolId, event.params.user);
+
+  getUserInteraction(
+    event.transaction.hash,
+    event.block.timestamp,
+    event.params.poolId,
+    event.params.user,
+    userData.getRate(),
+    _getUserDataDepozited(userData),
+    user.totalClaimed,
+    userData.getPendingRewards(),
+  ).save();
+
   pool.save();
   user.save();
   userInPool.save();
@@ -147,6 +167,9 @@ export function handleUserStaked(event: UserStakedEvent): void {
   userInPool.staked = userInPool.staked.plus(event.params.amount);
   pool.totalStaked = pool.totalStaked.plus(event.params.amount);
 
+  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
+  const userData = _getUserData(event.address, event.params.poolId, event.params.user);
+
   getPoolInteraction(
     event.transaction.hash,
     userInPool,
@@ -154,6 +177,18 @@ export function handleUserStaked(event: UserStakedEvent): void {
     true,
     event.params.amount,
     pool.totalStaked,
+    poolRate,
+  ).save();
+
+  getUserInteraction(
+    event.transaction.hash,
+    event.block.timestamp,
+    event.params.poolId,
+    event.params.user,
+    userData.getRate(),
+    _getUserDataDepozited(userData),
+    user.totalClaimed,
+    userData.getPendingRewards(),
   ).save();
 
   pool.save();
@@ -169,6 +204,9 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
   userInPool.staked = userInPool.staked.minus(event.params.amount);
   pool.totalStaked = pool.totalStaked.minus(event.params.amount);
 
+  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
+  const userData = _getUserData(event.address, event.params.poolId, event.params.user);
+
   getPoolInteraction(
     event.transaction.hash,
     userInPool,
@@ -176,8 +214,71 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
     false,
     event.params.amount,
     pool.totalStaked,
+    poolRate,
+  ).save();
+
+  getUserInteraction(
+    event.transaction.hash,
+    event.block.timestamp,
+    event.params.poolId,
+    event.params.user,
+    userData.getRate(),
+    _getUserDataDepozited(userData),
+    user.totalClaimed,
+    userData.getPendingRewards(),
   ).save();
 
   pool.save();
   userInPool.save();
+}
+
+export function handleUserClaimLocked(event: UserClaimLocked): void {
+  let pool = getPool(event.params.poolId);
+  let user = getUser(event.params.user);
+  let userInPool = getUserInPool(pool, user);
+
+  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
+  const userData = _getUserData(event.address, event.params.poolId, event.params.user);
+
+  getPoolInteraction(
+    event.transaction.hash,
+    userInPool,
+    event.block.timestamp,
+    true,
+    BigInt.zero(),
+    pool.totalStaked,
+    poolRate,
+  ).save();
+
+  getUserInteraction(
+    event.transaction.hash,
+    event.block.timestamp,
+    event.params.poolId,
+    event.params.user,
+    userData.getRate(),
+    _getUserDataDepozited(userData),
+    user.totalClaimed,
+    userData.getPendingRewards(),
+  ).save();
+
+  pool.save();
+  userInPool.save();
+}
+
+function _getCurrentPoolRate(address: Address, poolId: BigInt, timestamp: BigInt): BigInt {
+  const distribution = Distribution.bind(address);
+  const poolData = distribution.poolsData(poolId);
+  const rewards = distribution.getPeriodReward(poolId, poolData.getLastUpdate(), timestamp);
+  const rate = poolData.getRate().plus(rewards.div(poolData.getTotalVirtualDeposited()));
+
+  return rate;
+}
+
+function _getUserData(address: Address, poolId: BigInt, user: Address): Distribution__usersDataResult {
+  const distribution = Distribution.bind(address);
+  return distribution.usersData(user, poolId);
+}
+
+function _getUserDataDepozited(userData: Distribution__usersDataResult): BigInt {
+  return userData.getVirtualDeposited().isZero() ? userData.getDeposited() : userData.getVirtualDeposited();
 }

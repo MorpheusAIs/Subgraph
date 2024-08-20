@@ -152,6 +152,30 @@ type PoolInteraction @entity(immutable: true) {
 
   "The total staked amount after interaction"
   totalStaked: BigInt!
+
+  "The current pool rate"
+  rate: BigInt!
+}
+
+type UserInteraction @entity(immutable: true) {
+  "The tx hash"
+  id: Bytes!
+  "The timestamp of tx"
+  timestamp: BigInt!
+
+  "The pool ID"
+  poolId: BigInt!
+
+  "The caller address"
+  user: Bytes!
+  "The user rate"
+  rate: BigInt!
+  "The user deposited amount with multiplier"
+  deposited: BigInt!
+  "The user claimed rewards"
+  claimedRewards: BigInt!
+  "The user pending rewards"
+  pendingRewards: BigInt!
 }
 
 type User @entity {

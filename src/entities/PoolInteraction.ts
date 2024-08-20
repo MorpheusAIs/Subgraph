@@ -9,6 +9,7 @@ export function getPoolInteraction(
   isStake: boolean,
   amount: BigInt,
   totalStaked: BigInt,
+  rate: BigInt,
 ): PoolInteraction {
   let counter = getInteractionCount(hash);
 
@@ -29,6 +30,8 @@ export function getPoolInteraction(
     interaction.pool = userInPool.pool;
 
     interaction.totalStaked = totalStaked;
+
+    interaction.rate = rate;
 
     increaseCounter(counter);
   }

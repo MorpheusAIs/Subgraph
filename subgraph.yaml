@@ -53,4 +53,6 @@ dataSources:
           handler: handleUserStaked
         - event: UserWithdrawn(indexed uint256,indexed address,uint256)
           handler: handleUserWithdrawn
+        - event: UserClaimLocked(indexed uint256,indexed address,uint128,uint128)
+          handler: handleUserClaimLocked
       file: ./src/mappings/distribution.ts
