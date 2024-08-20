@@ -1,5 +1,6 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
 import { UserInteraction } from "../../generated/schema";
+import { getInteractionCount, increaseCounter } from "../helpers/InteractionCount";
 
 export function getUserInteraction(
   hash: Bytes,
@@ -11,7 +12,9 @@ export function getUserInteraction(
   claimedRewards: BigInt,
   pendingRewards: BigInt,
 ): UserInteraction {
-  let id = hash;
+  let counter = getInteractionCount(hash);
+
+  let id = hash.concatI32(counter.count.toI32());
   let interaction = UserInteraction.load(id);
 
   if (interaction == null) {
@@ -25,6 +28,8 @@ export function getUserInteraction(
     interaction.deposited = deposited;
     interaction.claimedRewards = claimedRewards;
     interaction.pendingRewards = pendingRewards;
+
+    increaseCounter(counter);
   }
 
   return interaction;

@@ -140,7 +140,6 @@ export function handleUserClaimed(event: UserClaimedEvent): void {
   user.totalClaimed = user.totalClaimed.plus(event.params.amount);
   userInPool.claimed = userInPool.claimed.plus(event.params.amount);
 
-  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
   const userData = _getUserData(event.address, event.params.poolId, event.params.user);
 
   getUserInteraction(
@@ -167,7 +166,6 @@ export function handleUserStaked(event: UserStakedEvent): void {
   userInPool.staked = userInPool.staked.plus(event.params.amount);
   pool.totalStaked = pool.totalStaked.plus(event.params.amount);
 
-  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
   const userData = _getUserData(event.address, event.params.poolId, event.params.user);
 
   getPoolInteraction(
@@ -177,7 +175,7 @@ export function handleUserStaked(event: UserStakedEvent): void {
     true,
     event.params.amount,
     pool.totalStaked,
-    poolRate,
+    userData.getRate(),
   ).save();
 
   getUserInteraction(
@@ -204,7 +202,6 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
   userInPool.staked = userInPool.staked.minus(event.params.amount);
   pool.totalStaked = pool.totalStaked.minus(event.params.amount);
 
-  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
   const userData = _getUserData(event.address, event.params.poolId, event.params.user);
 
   getPoolInteraction(
@@ -214,7 +211,7 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
     false,
     event.params.amount,
     pool.totalStaked,
-    poolRate,
+    userData.getRate(),
   ).save();
 
   getUserInteraction(
@@ -237,7 +234,6 @@ export function handleUserClaimLocked(event: UserClaimLocked): void {
   let user = getUser(event.params.user);
   let userInPool = getUserInPool(pool, user);
 
-  const poolRate = _getCurrentPoolRate(event.address, event.params.poolId, event.block.timestamp);
   const userData = _getUserData(event.address, event.params.poolId, event.params.user);
 
   getPoolInteraction(
@@ -247,7 +243,7 @@ export function handleUserClaimLocked(event: UserClaimLocked): void {
     true,
     BigInt.zero(),
     pool.totalStaked,
-    poolRate,
+    userData.getRate(),
   ).save();
 
   getUserInteraction(
@@ -263,15 +259,6 @@ export function handleUserClaimLocked(event: UserClaimLocked): void {
 
   pool.save();
   userInPool.save();
-}
-
-function _getCurrentPoolRate(address: Address, poolId: BigInt, timestamp: BigInt): BigInt {
-  const distribution = Distribution.bind(address);
-  const poolData = distribution.poolsData(poolId);
-  const rewards = distribution.getPeriodReward(poolId, poolData.getLastUpdate(), timestamp);
-  const rate = poolData.getRate().plus(rewards.div(poolData.getTotalVirtualDeposited()));
-
-  return rate;
 }
 
 function _getUserData(address: Address, poolId: BigInt, user: Address): Distribution__usersDataResult {
