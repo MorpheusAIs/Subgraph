@@ -148,7 +148,7 @@ export function handleUserClaimed(event: UserClaimedEvent): void {
     event.params.poolId,
     event.params.user,
     userData.getRate(),
-    _getUserDataDepozited(userData),
+    _getUserDataDeposited(userData),
     user.totalClaimed,
     userData.getPendingRewards(),
   ).save();
@@ -184,7 +184,7 @@ export function handleUserStaked(event: UserStakedEvent): void {
     event.params.poolId,
     event.params.user,
     userData.getRate(),
-    _getUserDataDepozited(userData),
+    _getUserDataDeposited(userData),
     user.totalClaimed,
     userData.getPendingRewards(),
   ).save();
@@ -220,7 +220,7 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
     event.params.poolId,
     event.params.user,
     userData.getRate(),
-    _getUserDataDepozited(userData),
+    _getUserDataDeposited(userData),
     user.totalClaimed,
     userData.getPendingRewards(),
   ).save();
@@ -252,7 +252,7 @@ export function handleUserClaimLocked(event: UserClaimLocked): void {
     event.params.poolId,
     event.params.user,
     userData.getRate(),
-    _getUserDataDepozited(userData),
+    _getUserDataDeposited(userData),
     user.totalClaimed,
     userData.getPendingRewards(),
   ).save();
@@ -287,6 +287,6 @@ function _getUserData(address: Address, poolId: BigInt, user: Address): Distribu
   return res.value;
 }
 
-function _getUserDataDepozited(userData: Distribution__usersDataResult): BigInt {
+function _getUserDataDeposited(userData: Distribution__usersDataResult): BigInt {
   return userData.getVirtualDeposited().isZero() ? userData.getDeposited() : userData.getVirtualDeposited();
 }
