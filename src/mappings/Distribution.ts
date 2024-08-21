@@ -1,7 +1,9 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
+  Distribution,
+  Distribution__usersDataResult,
   Initialized as InitializedEvent,
   OverplusBridged as OverplusBridgedEvent,
   OwnershipTransferred as OwnershipTransferredEvent,
@@ -9,11 +11,9 @@ import {
   PoolEdited as PoolEditedEvent,
   Upgraded as UpgradedEvent,
   UserClaimed as UserClaimedEvent,
+  UserClaimLocked,
   UserStaked as UserStakedEvent,
   UserWithdrawn as UserWithdrawnEvent,
-  Distribution,
-  Distribution__usersDataResult,
-  UserClaimLocked,
 } from "../../generated/Distribution/Distribution";
 import {
   AdminChanged,
@@ -263,7 +263,28 @@ export function handleUserClaimLocked(event: UserClaimLocked): void {
 
 function _getUserData(address: Address, poolId: BigInt, user: Address): Distribution__usersDataResult {
   const distribution = Distribution.bind(address);
-  return distribution.usersData(user, poolId);
+  let res = distribution.try_usersData(user, poolId);
+  if (res.reverted) {
+    // Fallback for old contracts
+    const result = distribution.call("usersData", "usersData(address,uint256):(uint128,uint256,uint256,uint256)", [
+      ethereum.Value.fromAddress(user),
+      ethereum.Value.fromUnsignedBigInt(poolId),
+    ]);
+
+    res = ethereum.CallResult.fromValue(
+      new Distribution__usersDataResult(
+        result[0].toBigInt(),
+        result[1].toBigInt(),
+        result[2].toBigInt(),
+        result[3].toBigInt(),
+        BigInt.zero(),
+        BigInt.zero(),
+        BigInt.zero(),
+      ),
+    );
+  }
+
+  return res.value;
 }
 
 function _getUserDataDepozited(userData: Distribution__usersDataResult): BigInt {
