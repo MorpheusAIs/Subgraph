@@ -8,6 +8,8 @@
     "compile": "graph codegen && graph build",
     "codegen": "graph codegen",
     "build": "graph build",
+    "prepare:ethereum-mainnet": "mustache config/ethereum-mainnet.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:ethereum-sepolia": "mustache config/ethereum-sepolia.json subgraph.template.yaml > subgraph.yaml",
     "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ morpheus-dashboard",
     "create-local": "graph create --node http://localhost:8020/ morpheus-dashboard",
     "remove-local": "graph remove --node http://localhost:8020/ morpheus-dashboard",
@@ -28,6 +30,7 @@
     "prettier": "^3.0.1"
   },
   "devDependencies": {
-    "matchstick-as": "0.6.0"
+    "matchstick-as": "0.6.0",
+    "mustache": "^4.2.0"
   }
 }

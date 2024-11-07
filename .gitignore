@@ -6,3 +6,4 @@ build
 tests/.bin
 tests/.latest.json
 tests/.docker
+.subgraph.yaml
