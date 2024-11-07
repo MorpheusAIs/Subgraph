@@ -1,4 +1,4 @@
-import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import { afterEach, assert, clearStore, describe, test } from "matchstick-as/assembly/index";
 import { getPool } from "../src/entities/Pool";
 import { getUser } from "../src/entities/User";
@@ -6,16 +6,21 @@ import { getUserInPool } from "../src/entities/UserInPool";
 import {
   handlePoolCreated,
   handlePoolEdited,
+  handleReferrerClaimed,
   handleUserClaimed,
+  handleUserReferred,
   handleUserStaked,
   handleUserWithdrawn,
 } from "../src/mappings/Distribution";
 import {
   createPoolCreatedEvent,
   createPoolEditedEvent,
+  createReferrerClaimedEvent,
   createUserClaimedEvent,
+  createUserReferredEvent,
   createUserStakedEvent,
   createUserWithdrawnEvent,
+  mockUsersDataCall,
 } from "./utils/distribution-utils";
 
 describe("Distribution", () => {
@@ -52,8 +57,6 @@ describe("Distribution", () => {
     handlePoolCreated(event);
 
     assert.entityCount("Pool", 1);
-
-    // log.debug("Pool created: ", Bytes.fromByteArray(Bytes.fromBigInt(poolId)).toHexString());
 
     assert.fieldEquals("Pool", "0x00000000", "payoutStart", payoutStart.toString());
     assert.fieldEquals("Pool", "0x00000000", "decreaseInterval", decreaseInterval.toString());
@@ -147,11 +150,10 @@ describe("Distribution", () => {
     pool.save();
 
     let userAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181671");
-
     let amount = BigInt.fromI32(123);
-
     let event = createUserStakedEvent(poolId, userAddress, amount);
 
+    mockUsersDataCall(event.address, event.params.user, event.params.poolId);
     handleUserStaked(event);
 
     assert.entityCount("Pool", 1);
@@ -169,6 +171,10 @@ describe("Distribution", () => {
     assert.fieldEquals("UserInPool", userInPool.id.toHexString(), "staked", amount.toString());
     assert.fieldEquals("UserInPool", userInPool.id.toHexString(), "claimed", BigInt.fromI32(0).toString());
 
+    assert.entityCount("InteractionCount", 1);
+    // pool interaction + user interaction. 0 -> 1 -> 2
+    assert.fieldEquals("InteractionCount", event.transaction.hash.toHexString(), "count", BigInt.fromI32(2).toString());
+
     assert.fieldEquals(
       "PoolInteraction",
       event.transaction.hash.concatI32(0).toHexString(),
@@ -207,52 +213,59 @@ describe("Distribution", () => {
       amount.toString(),
     );
 
+    amount = BigInt.fromI32(77);
+    event = createUserStakedEvent(poolId, userAddress, amount);
     handleUserStaked(event);
 
+    assert.entityCount("InteractionCount", 1);
+    // pool interaction + user interaction. 2 -> 3 -> 4
+    assert.fieldEquals("InteractionCount", event.transaction.hash.toHexString(), "count", BigInt.fromI32(4).toString());
+
     assert.fieldEquals("Pool", pool.id.toHexString(), "totalUsers", BigInt.fromI32(1).toString());
-    assert.fieldEquals("Pool", pool.id.toHexString(), "totalStaked", amount.times(BigInt.fromI32(2)).toString());
+    assert.fieldEquals("Pool", pool.id.toHexString(), "totalStaked", BigInt.fromI32(200).toString());
 
     assert.fieldEquals("User", userAddress.toHexString(), "totalClaimed", BigInt.fromI32(0).toString());
 
-    assert.fieldEquals("UserInPool", userInPool.id.toHexString(), "staked", amount.times(BigInt.fromI32(2)).toString());
+    assert.fieldEquals("UserInPool", userInPool.id.toHexString(), "staked", BigInt.fromI32(200).toString());
     assert.fieldEquals("UserInPool", userInPool.id.toHexString(), "claimed", BigInt.fromI32(0).toString());
 
+    assert.entityCount("PoolInteraction", 2);
     assert.fieldEquals(
       "PoolInteraction",
-      event.transaction.hash.concatI32(1).toHexString(),
+      event.transaction.hash.concatI32(2).toHexString(),
       "hash",
       event.transaction.hash.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      event.transaction.hash.concatI32(1).toHexString(),
+      event.transaction.hash.concatI32(2).toHexString(),
       "timestamp",
       event.block.timestamp.toString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      event.transaction.hash.concatI32(1).toHexString(),
+      event.transaction.hash.concatI32(2).toHexString(),
       "pool",
       pool.id.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      event.transaction.hash.concatI32(1).toHexString(),
+      event.transaction.hash.concatI32(2).toHexString(),
       "userInPool",
       userInPool.id.toHexString(),
     );
-    assert.fieldEquals("PoolInteraction", event.transaction.hash.concatI32(0).toHexString(), "isStake", "true");
+    assert.fieldEquals("PoolInteraction", event.transaction.hash.concatI32(2).toHexString(), "isStake", "true");
     assert.fieldEquals(
       "PoolInteraction",
-      event.transaction.hash.concatI32(1).toHexString(),
+      event.transaction.hash.concatI32(2).toHexString(),
       "amount",
       amount.toString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      event.transaction.hash.concatI32(1).toHexString(),
+      event.transaction.hash.concatI32(2).toHexString(),
       "totalStaked",
-      amount.times(BigInt.fromI32(2)).toString(),
+      BigInt.fromI32(200).toString(),
     );
   });
 
@@ -264,15 +277,11 @@ describe("Distribution", () => {
     let userAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181671");
 
     let amount = BigInt.fromI32(123);
-
     let event = createUserStakedEvent(poolId, userAddress, amount);
-
     handleUserStaked(event);
 
     let withdrawAmount = BigInt.fromI32(23);
-
     let withdrawEvent = createUserWithdrawnEvent(poolId, userAddress, withdrawAmount);
-
     handleUserWithdrawn(withdrawEvent);
 
     let user = getUser(userAddress);
@@ -285,43 +294,43 @@ describe("Distribution", () => {
 
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "hash",
       withdrawEvent.transaction.hash.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "timestamp",
       withdrawEvent.block.timestamp.toString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "pool",
       pool.id.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "userInPool",
       userInPool.id.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "isStake",
       "false",
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "amount",
       withdrawAmount.toString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(1).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
       "totalStaked",
       amount.minus(withdrawAmount).toString(),
     );
@@ -338,43 +347,43 @@ describe("Distribution", () => {
 
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "hash",
       withdrawEvent.transaction.hash.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "timestamp",
       withdrawEvent.block.timestamp.toString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "pool",
       pool.id.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "userInPool",
       userInPool.id.toHexString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "isStake",
       "false",
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "amount",
       withdrawAmount.toString(),
     );
     assert.fieldEquals(
       "PoolInteraction",
-      withdrawEvent.transaction.hash.concatI32(2).toHexString(),
+      withdrawEvent.transaction.hash.concatI32(4).toHexString(),
       "totalStaked",
       amount.minus(withdrawAmount.times(BigInt.fromI32(2))).toString(),
     );
@@ -383,14 +392,11 @@ describe("Distribution", () => {
   test("Should handle user claimed", () => {
     let poolId = BigInt.fromI32(0);
     let pool = getPool(poolId);
-    pool.save();
 
     let userAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181671");
 
     let amount = BigInt.fromI32(123);
-
     let event = createUserClaimedEvent(poolId, userAddress, userAddress, amount);
-
     handleUserClaimed(event);
 
     let user = getUser(userAddress);
@@ -415,10 +421,9 @@ describe("Distribution", () => {
 
     poolId = BigInt.fromI32(1);
     pool = getPool(poolId);
-    pool.save();
 
     event = createUserClaimedEvent(poolId, userAddress, userAddress, amount);
-
+    mockUsersDataCall(event.address, event.params.user, event.params.poolId);
     handleUserClaimed(event);
 
     userInPool = getUserInPool(pool, user);
@@ -458,5 +463,44 @@ describe("Distribution", () => {
 
     assert.fieldEquals("User", receiverAddress.toHexString(), "totalClaimed", BigInt.fromI32(0).toString());
     assert.fieldEquals("UserInPool", receiverInPool.id.toHexString(), "claimed", BigInt.fromI32(0).toString());
+  });
+
+  test("Should handle user referred", () => {
+    let poolId = BigInt.fromI32(0);
+    let userAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181671");
+    let referrerAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181672");
+    let amount = BigInt.fromI32(123);
+
+    let event = createUserReferredEvent(poolId, userAddress, referrerAddress, amount);
+    handleUserReferred(event);
+
+    let id = userAddress
+      .concat(referrerAddress)
+      .concat(Bytes.fromByteArray(Bytes.fromBigInt(poolId)))
+      .toHexString();
+    assert.fieldEquals("UserReferrer", id, "user", userAddress.toHexString());
+    assert.fieldEquals("UserReferrer", id, "referrer", referrerAddress.toHexString());
+    assert.fieldEquals("UserReferrer", id, "poolId", poolId.toString());
+    assert.fieldEquals("UserReferrer", id, "amount", amount.toString());
+  });
+
+  test("Should handle referrer claimed", () => {
+    let poolId = BigInt.fromI32(0);
+    let userAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181671");
+    let receiverAddress = Address.fromString("0x86e08f7d84603AEb97cd1c89A80A9e914f181672");
+    let amount = BigInt.fromI32(123);
+
+    let event = createReferrerClaimedEvent(poolId, userAddress, receiverAddress, amount);
+    handleReferrerClaimed(event);
+
+    let id = userAddress.concat(Bytes.fromByteArray(Bytes.fromBigInt(poolId))).toHexString();
+    assert.fieldEquals("Referrer", id, "user", userAddress.toHexString());
+    assert.fieldEquals("Referrer", id, "poolId", poolId.toString());
+    assert.fieldEquals("Referrer", id, "totalClaimed", amount.toString());
+
+    handleReferrerClaimed(event);
+    assert.fieldEquals("Referrer", id, "user", userAddress.toHexString());
+    assert.fieldEquals("Referrer", id, "poolId", poolId.toString());
+    assert.fieldEquals("Referrer", id, "totalClaimed", amount.times(BigInt.fromI32(2)).toString());
   });
 });

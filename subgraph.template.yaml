@@ -8,7 +8,7 @@ dataSources:
     name: Distribution
     network: { { network } }
     source:
-      address: { { distribution } }
+      address: "{{ distribution }}"
       abi: Distribution
       startBlock: { { distributionStartBlock } }
     mapping:
@@ -55,4 +55,8 @@ dataSources:
           handler: handleUserWithdrawn
         - event: UserClaimLocked(indexed uint256,indexed address,uint128,uint128)
           handler: handleUserClaimLocked
+        - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleUserReferred
+        - event: ReferrerClaimed(indexed uint256, indexed address,address,uint256);
+          handler: handleReferrerClaimed
       file: ./src/mappings/distribution.ts

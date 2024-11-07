@@ -9,9 +9,11 @@ import {
   OwnershipTransferred as OwnershipTransferredEvent,
   PoolCreated as PoolCreatedEvent,
   PoolEdited as PoolEditedEvent,
+  ReferrerClaimed,
   Upgraded as UpgradedEvent,
   UserClaimed as UserClaimedEvent,
   UserClaimLocked,
+  UserReferred,
   UserStaked as UserStakedEvent,
   UserWithdrawn as UserWithdrawnEvent,
 } from "../../generated/Distribution/Distribution";
@@ -29,6 +31,8 @@ import { getPoolInteraction } from "../entities/PoolInteraction";
 import { getUser } from "../entities/User";
 import { getUserInPool } from "../entities/UserInPool";
 import { getUserInteraction } from "../entities/UserInteraction";
+import { getUserReferrer } from "../entities/UserReferrer";
+import { getReferrer } from "../entities/Referrer";
 
 export function handleAdminChanged(event: AdminChangedEvent): void {
   let entity = new AdminChanged(event.transaction.hash.concatI32(event.logIndex.toI32()));
@@ -261,30 +265,93 @@ export function handleUserClaimLocked(event: UserClaimLocked): void {
   userInPool.save();
 }
 
+export function handleUserReferred(event: UserReferred): void {
+  let userReferrer = getUserReferrer(event.params.user, event.params.referrer, event.params.poolId);
+
+  userReferrer.timestamp = event.block.timestamp;
+  userReferrer.amount = event.params.amount;
+
+  userReferrer.save();
+}
+
+export function handleReferrerClaimed(event: ReferrerClaimed): void {
+  let referrer = getReferrer(event.params.user, event.params.poolId);
+
+  referrer.totalClaimed = referrer.totalClaimed.plus(event.params.amount);
+
+  referrer.save();
+}
+
 function _getUserData(address: Address, poolId: BigInt, user: Address): Distribution__usersDataResult {
   const distribution = Distribution.bind(address);
-  let res = distribution.try_usersData(user, poolId);
-  if (res.reverted) {
-    // Fallback for old contracts
-    const result = distribution.call("usersData", "usersData(address,uint256):(uint128,uint256,uint256,uint256)", [
-      ethereum.Value.fromAddress(user),
-      ethereum.Value.fromUnsignedBigInt(poolId),
-    ]);
+  const version = distribution.version();
 
-    res = ethereum.CallResult.fromValue(
-      new Distribution__usersDataResult(
-        result[0].toBigInt(),
-        result[1].toBigInt(),
-        result[2].toBigInt(),
-        result[3].toBigInt(),
-        BigInt.zero(),
-        BigInt.zero(),
-        BigInt.zero(),
-      ),
+  const signatures = [
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // V5
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128)", // V4
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // V3
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // V2
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256)", // V1
+  ];
+
+  const versions: i32[] = [5, 4, 3, 2, 1];
+
+  let signature: string | null = null;
+
+  for (let i = 0; i < versions.length; i++) {
+    if (versions[i] == version.toI32()) {
+      signature = signatures[i];
+      break;
+    }
+  }
+
+  if (signature !== null) {
+    const result = _callUsersData(distribution, user, poolId, signature);
+
+    if (result !== null) {
+      return result;
+    }
+  }
+
+  return new Distribution__usersDataResult(
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    Address.zero(),
+  );
+}
+
+function _callUsersData(
+  distribution: Distribution,
+  user: Address,
+  poolId: BigInt,
+  signature: string,
+): Distribution__usersDataResult | null {
+  const result = distribution.tryCall("usersData", signature, [
+    ethereum.Value.fromAddress(user),
+    ethereum.Value.fromUnsignedBigInt(poolId),
+  ]);
+
+  if (!result.reverted) {
+    return new Distribution__usersDataResult(
+      result.value[0].toBigInt(),
+      result.value[1].toBigInt(),
+      result.value[2].toBigInt(),
+      result.value[3].toBigInt(),
+      BigInt.zero(),
+      BigInt.zero(),
+      BigInt.zero(),
+      BigInt.zero(),
+      Address.zero(),
     );
   }
 
-  return res.value;
+  return null;
 }
 
 function _getUserDataDeposited(userData: Distribution__usersDataResult): BigInt {
