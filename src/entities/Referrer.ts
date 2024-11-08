@@ -9,6 +9,7 @@ export function getReferrer(referrer: Address, poolId: BigInt): Referrer {
     entity = new Referrer(id);
     entity.user = referrer;
     entity.poolId = poolId;
+    entity.totalClaimed = BigInt.fromI32(0);
   }
 
   return entity;

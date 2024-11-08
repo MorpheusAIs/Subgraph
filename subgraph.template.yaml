@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Distribution
-    network: { { network } }
+    network: "{{ network }}"
     source:
       address: "{{ distribution }}"
       abi: Distribution
-      startBlock: { { distributionStartBlock } }
+      startBlock: +{{ distributionStartBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -57,6 +57,6 @@ dataSources:
           handler: handleUserClaimLocked
         - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
           handler: handleUserReferred
-        - event: ReferrerClaimed(indexed uint256, indexed address,address,uint256);
+        - event: ReferrerClaimed(indexed uint256,indexed address,address,uint256)
           handler: handleReferrerClaimed
       file: ./src/mappings/distribution.ts
