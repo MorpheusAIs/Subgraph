@@ -28,11 +28,11 @@ import {
 } from "../../generated/schema";
 import { getPool } from "../entities/Pool";
 import { getPoolInteraction } from "../entities/PoolInteraction";
+import { getReferrer } from "../entities/Referrer";
 import { getUser } from "../entities/User";
 import { getUserInPool } from "../entities/UserInPool";
 import { getUserInteraction } from "../entities/UserInteraction";
 import { getUserReferrer } from "../entities/UserReferrer";
-import { getReferrer } from "../entities/Referrer";
 
 export function handleAdminChanged(event: AdminChangedEvent): void {
   let entity = new AdminChanged(event.transaction.hash.concatI32(event.logIndex.toI32()));
@@ -284,7 +284,8 @@ export function handleReferrerClaimed(event: ReferrerClaimed): void {
 
 function _getUserData(address: Address, poolId: BigInt, user: Address): Distribution__usersDataResult {
   const distribution = Distribution.bind(address);
-  const version = distribution.version();
+  const versionData = distribution.try_version();
+  const version = versionData.reverted ? new BigInt(0) : versionData.value;
 
   const signatures = [
     "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // V5
