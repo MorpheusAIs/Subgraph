@@ -212,3 +212,29 @@ type InteractionCount @entity {
   "The counter of interactions in single tx"
   count: BigInt!
 }
+
+type UserReferrer @entity {
+  "id forms from user address + referrer address + pool id "
+  id: Bytes!
+  "The timestamp of tx"
+  timestamp: BigInt!
+  "The user address"
+  user: Bytes!
+  "The pool ID"
+  poolId: BigInt!
+  "The referrer address"
+  referrer: Bytes!
+  "The amount of referred tokens"
+  amount: BigInt!
+}
+
+type Referrer @entity {
+  "id forms from user address + pool id "
+  id: Bytes!
+  "The referrer address"
+  user: Bytes!
+  "The pool ID"
+  poolId: BigInt!
+  "The referrer total claimed"
+  totalClaimed: BigInt!
+}

@@ -137,7 +137,7 @@
           { "internalType": "bool", "name": "isPublic", "type": "bool" }
         ],
         "indexed": false,
-        "internalType": "struct IDistributionV2.Pool",
+        "internalType": "struct IDistributionV5.Pool",
         "name": "pool",
         "type": "tuple"
       }
@@ -199,12 +199,97 @@
           { "internalType": "bool", "name": "isPublic", "type": "bool" }
         ],
         "indexed": false,
-        "internalType": "struct IDistributionV2.Pool",
+        "internalType": "struct IDistributionV5.Pool",
         "name": "pool",
         "type": "tuple"
       }
     ],
     "name": "PoolEdited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "claimLockPeriodAfterStake",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint128",
+            "name": "claimLockPeriodAfterClaim",
+            "type": "uint128"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct IDistributionV5.PoolLimits",
+        "name": "poolLimit",
+        "type": "tuple"
+      }
+    ],
+    "name": "PoolLimitsEdited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReferrerClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          { "internalType": "uint256", "name": "amount", "type": "uint256" },
+          { "internalType": "uint256", "name": "multiplier", "type": "uint256" }
+        ],
+        "indexed": false,
+        "internalType": "struct IDistributionV5.ReferrerTier[]",
+        "name": "tiers",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "ReferrerTiersEdited",
     "type": "event"
   },
   {
@@ -280,6 +365,37 @@
       }
     ],
     "name": "UserClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "poolId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "UserReferred",
     "type": "event"
   },
   {
@@ -380,7 +496,7 @@
           },
           { "internalType": "bool", "name": "isPublic", "type": "bool" }
         ],
-        "internalType": "struct IDistributionV2.Pool[]",
+        "internalType": "struct IDistributionV5.Pool[]",
         "name": "poolsInfo_",
         "type": "tuple[]"
       }
@@ -411,6 +527,16 @@
       { "internalType": "address", "name": "receiver_", "type": "address" }
     ],
     "name": "claim",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "poolId_", "type": "uint256" },
+      { "internalType": "address", "name": "receiver_", "type": "address" }
+    ],
+    "name": "claimReferrerTier",
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
@@ -461,7 +587,7 @@
           },
           { "internalType": "bool", "name": "isPublic", "type": "bool" }
         ],
-        "internalType": "struct IDistributionV2.Pool",
+        "internalType": "struct IDistributionV5.Pool",
         "name": "pool_",
         "type": "tuple"
       }
@@ -525,12 +651,56 @@
           },
           { "internalType": "bool", "name": "isPublic", "type": "bool" }
         ],
-        "internalType": "struct IDistributionV2.Pool",
+        "internalType": "struct IDistributionV5.Pool",
         "name": "pool_",
         "type": "tuple"
       }
     ],
     "name": "editPool",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "poolId_", "type": "uint256" },
+      {
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "claimLockPeriodAfterStake",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint128",
+            "name": "claimLockPeriodAfterClaim",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct IDistributionV5.PoolLimits",
+        "name": "poolLimits_",
+        "type": "tuple"
+      }
+    ],
+    "name": "editPoolLimits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "poolId_", "type": "uint256" },
+      {
+        "components": [
+          { "internalType": "uint256", "name": "amount", "type": "uint256" },
+          { "internalType": "uint256", "name": "multiplier", "type": "uint256" }
+        ],
+        "internalType": "struct IDistributionV5.ReferrerTier[]",
+        "name": "referrerTiers_",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "editReferrerTiers",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -546,6 +716,16 @@
       { "internalType": "uint128", "name": "claimLockEnd_", "type": "uint128" }
     ],
     "name": "getClaimLockPeriodMultiplier",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "poolId_", "type": "uint256" },
+      { "internalType": "address", "name": "user_", "type": "address" }
+    ],
+    "name": "getCurrentReferrerReward",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
@@ -577,6 +757,16 @@
       { "internalType": "uint128", "name": "endTime_", "type": "uint128" }
     ],
     "name": "getPeriodReward",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "poolId_", "type": "uint256" },
+      { "internalType": "address", "name": "referrer_", "type": "address" }
+    ],
+    "name": "getReferrerMultiplier",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
@@ -614,7 +804,8 @@
         "internalType": "uint128[]",
         "name": "claimLockEnds_",
         "type": "uint128[]"
-      }
+      },
+      { "internalType": "address[]", "name": "referrers_", "type": "address[]" }
     ],
     "name": "manageUsersInPrivatePool",
     "outputs": [],
@@ -688,9 +879,64 @@
     "type": "function"
   },
   {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "poolsLimits",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "claimLockPeriodAfterStake",
+        "type": "uint128"
+      },
+      {
+        "internalType": "uint128",
+        "name": "claimLockPeriodAfterClaim",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "proxiableUUID",
     "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "referrerTiers",
+    "outputs": [
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "uint256", "name": "multiplier", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "referrersData",
+    "outputs": [
+      { "internalType": "uint256", "name": "amountStaked", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "virtualAmountStaked",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "rate", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "pendingRewards",
+        "type": "uint256"
+      },
+      { "internalType": "uint128", "name": "lastClaim", "type": "uint128" }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
@@ -712,7 +958,8 @@
     "inputs": [
       { "internalType": "uint256", "name": "poolId_", "type": "uint256" },
       { "internalType": "uint256", "name": "amount_", "type": "uint256" },
-      { "internalType": "uint128", "name": "claimLockEnd_", "type": "uint128" }
+      { "internalType": "uint128", "name": "claimLockEnd_", "type": "uint128" },
+      { "internalType": "address", "name": "referrer_", "type": "address" }
     ],
     "name": "stake",
     "outputs": [],
@@ -760,6 +1007,69 @@
     "name": "upgradeToAndCall",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "usersData",
+    "outputs": [
+      { "internalType": "uint128", "name": "lastStake", "type": "uint128" },
+      { "internalType": "uint256", "name": "deposited", "type": "uint256" },
+      { "internalType": "uint256", "name": "rate", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "pendingRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint128",
+        "name": "claimLockStart",
+        "type": "uint128"
+      },
+      { "internalType": "uint128", "name": "claimLockEnd", "type": "uint128" },
+      {
+        "internalType": "uint256",
+        "name": "virtualDeposited",
+        "type": "uint256"
+      },
+      { "internalType": "uint128", "name": "lastClaim", "type": "uint128" },
+      { "internalType": "address", "name": "referrer", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "usersData",
+    "outputs": [
+      { "internalType": "uint128", "name": "lastStake", "type": "uint128" },
+      { "internalType": "uint256", "name": "deposited", "type": "uint256" },
+      { "internalType": "uint256", "name": "rate", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "pendingRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint128",
+        "name": "claimLockStart",
+        "type": "uint128"
+      },
+      { "internalType": "uint128", "name": "claimLockEnd", "type": "uint128" },
+      {
+        "internalType": "uint256",
+        "name": "virtualDeposited",
+        "type": "uint256"
+      },
+      { "internalType": "uint128", "name": "lastClaim", "type": "uint128" }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

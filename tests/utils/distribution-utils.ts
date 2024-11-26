@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
-import { newMockEvent } from "matchstick-as";
+import { newMockEvent, createMockedFunction } from "matchstick-as";
 import {
   AdminChanged,
   BeaconUpgraded,
@@ -8,8 +8,10 @@ import {
   OwnershipTransferred,
   PoolCreated,
   PoolEdited,
+  ReferrerClaimed,
   Upgraded,
   UserClaimed,
+  UserReferred,
   UserStaked,
   UserWithdrawn,
 } from "../../generated/Distribution/Distribution";
@@ -140,4 +142,64 @@ export function createUserWithdrawnEvent(poolId: BigInt, user: Address, amount: 
   userWithdrawnEvent.parameters.push(new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount)));
 
   return userWithdrawnEvent;
+}
+
+export function createUserReferredEvent(
+  poolId: BigInt,
+  user: Address,
+  referrer: Address,
+  amount: BigInt,
+): UserReferred {
+  let event = changetype<UserReferred>(newMockEvent());
+
+  event.parameters = new Array();
+
+  event.parameters.push(new ethereum.EventParam("poolId", ethereum.Value.fromUnsignedBigInt(poolId)));
+  event.parameters.push(new ethereum.EventParam("user", ethereum.Value.fromAddress(user)));
+  event.parameters.push(new ethereum.EventParam("referrer", ethereum.Value.fromAddress(referrer)));
+  event.parameters.push(new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount)));
+
+  return event;
+}
+
+export function createReferrerClaimedEvent(
+  poolId: BigInt,
+  user: Address,
+  receiver: Address,
+  amount: BigInt,
+): ReferrerClaimed {
+  let event = changetype<ReferrerClaimed>(newMockEvent());
+
+  event.parameters = new Array();
+
+  event.parameters.push(new ethereum.EventParam("poolId", ethereum.Value.fromUnsignedBigInt(poolId)));
+  event.parameters.push(new ethereum.EventParam("user", ethereum.Value.fromAddress(user)));
+  event.parameters.push(new ethereum.EventParam("receiver", ethereum.Value.fromAddress(receiver)));
+  event.parameters.push(new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount)));
+
+  return event;
+}
+
+export function mockUsersDataCall(contract: Address, user: Address, poolId: BigInt): void {
+  createMockedFunction(contract, "version", "version():(uint256)").returns([
+    ethereum.Value.fromUnsignedBigInt(BigInt.fromString("5")),
+  ]);
+
+  createMockedFunction(
+    contract,
+    "usersData",
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)",
+  )
+    .withArgs([ethereum.Value.fromAddress(user), ethereum.Value.fromUnsignedBigInt(poolId)])
+    .returns([
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("0")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("1")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("2")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("3")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("4")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("5")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("6")),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("7")),
+      ethereum.Value.fromAddress(Address.fromString("0x000000000000000000000000000000000000007b")),
+    ]);
 }
