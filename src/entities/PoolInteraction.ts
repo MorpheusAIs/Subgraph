@@ -1,15 +1,19 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts";
-import { PoolInteraction, UserInPool } from "../../generated/schema";
+import { BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
+import { PoolInteraction, User } from "../../generated/schema";
 import { getInteractionCount, increaseCounter } from "../helpers/InteractionCount";
+
+export enum PoolInteractionType {
+  STAKE = 0,
+  WITHDRAW = 1,
+  CLAIM = 2,
+}
 
 export function getPoolInteraction(
   hash: Bytes,
-  userInPool: UserInPool,
-  timestamp: BigInt,
-  isStake: boolean,
+  block: ethereum.Block,
+  user: User,
+  type: PoolInteractionType,
   amount: BigInt,
-  totalStaked: BigInt,
-  rate: BigInt,
 ): PoolInteraction {
   let counter = getInteractionCount(hash);
 
@@ -20,18 +24,13 @@ export function getPoolInteraction(
   if (interaction == null) {
     interaction = new PoolInteraction(id);
 
-    interaction.hash = hash;
-    interaction.timestamp = timestamp;
+    interaction.transactionHash = hash;
+    interaction.blockTimestamp = block.timestamp;
+    interaction.blockNumber = block.number;
 
-    interaction.isStake = isStake;
+    interaction.user = user.id;
+    interaction.type = BigInt.fromI32(type as i32);
     interaction.amount = amount;
-
-    interaction.userInPool = userInPool.id;
-    interaction.pool = userInPool.pool;
-
-    interaction.totalStaked = totalStaked;
-
-    interaction.rate = rate;
 
     increaseCounter(counter);
   }

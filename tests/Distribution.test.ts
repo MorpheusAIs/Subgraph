@@ -2,7 +2,7 @@ import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import { afterEach, assert, clearStore, describe, test } from "matchstick-as/assembly/index";
 import { getPool } from "../src/entities/Pool";
 import { getUser } from "../src/entities/User";
-import { getUserInPool } from "../src/entities/UserInPool";
+import { getUserInPool } from "../src/entities/User";
 import {
   handlePoolCreated,
   handlePoolEdited,
@@ -11,7 +11,7 @@ import {
   handleUserReferred,
   handleUserStaked,
   handleUserWithdrawn,
-} from "../src/mappings/Distribution";
+} from "../src/mappings/DepositPool";
 import {
   createPoolCreatedEvent,
   createPoolEditedEvent,

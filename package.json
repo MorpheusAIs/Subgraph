@@ -10,6 +10,7 @@
     "build": "graph build",
     "prepare:ethereum-mainnet": "mustache config/ethereum-mainnet.json subgraph.template.yaml > subgraph.yaml",
     "prepare:ethereum-sepolia": "mustache config/ethereum-sepolia.json subgraph.template.yaml > subgraph.yaml",
+    "deploy:ethereum-sepolia": "npm run prepare:ethereum-mainnet && npm run compile && npx graph deploy morpheus-ethereum-sepolia",
     "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ morpheus-dashboard",
     "create-local": "graph create --node http://localhost:8020/ morpheus-dashboard",
     "remove-local": "graph remove --node http://localhost:8020/ morpheus-dashboard",

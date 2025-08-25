@@ -1,5 +1,7 @@
 {
     "network": "sepolia",
-    "distribution": "0x7c46d6bebf3dcd902eb431054e59908a02aba524",
-    "distributionStartBlock": "6339604"
+    "depositPool_stETH": "0xFea33A23F97d785236F22693eDca564782ae98d0",
+    "depositPool_stETH_startBlock": "8309650",
+    "depositPool_LINK": "0x7f4f17be21219D7DA4C8E0d0B9be6a778354E5A5",
+    "depositPool_LINK_startBlock": "8309650"
 }

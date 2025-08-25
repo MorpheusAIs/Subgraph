@@ -5,12 +5,12 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: Distribution
+    name: DepositPoolStETH
     network: "{{ network }}"
     source:
-      address: "{{ distribution }}"
-      abi: Distribution
-      startBlock: +{{ distributionStartBlock }}
+      address: "{{ depositPool_stETH }}"
+      abi: DepositPool
+      startBlock: { { depositPool_stETH_startBlock } }
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -19,17 +19,16 @@ dataSources:
         - AdminChanged
         - BeaconUpgraded
         - Initialized
-        - OverplusBridged
-        - OwnershipTransferred
-        - PoolCreated
-        - PoolEdited
         - Upgraded
-        - UserClaimed
-        - UserStaked
-        - UserWithdrawn
+        - OwnershipTransferred
+        - User
+        - PoolInteraction
+        - InteractionCount
+        - UserReferrer
+        - Referrer
       abis:
-        - name: Distribution
-          file: ./abis/Distribution.json
+        - name: DepositPool
+          file: ./abis/DepositPool.json
       eventHandlers:
         - event: AdminChanged(address,address)
           handler: handleAdminChanged
@@ -37,14 +36,8 @@ dataSources:
           handler: handleBeaconUpgraded
         - event: Initialized(uint8)
           handler: handleInitialized
-        - event: OverplusBridged(uint256,bytes)
-          handler: handleOverplusBridged
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
-        - event: PoolCreated(indexed uint256,(uint128,uint128,uint128,uint128,uint128,uint256,uint256,uint256,bool))
-          handler: handlePoolCreated
-        - event: PoolEdited(indexed uint256,(uint128,uint128,uint128,uint128,uint128,uint256,uint256,uint256,bool))
-          handler: handlePoolEdited
         - event: Upgraded(indexed address)
           handler: handleUpgraded
         - event: UserClaimed(indexed uint256,indexed address,address,uint256)
@@ -53,10 +46,56 @@ dataSources:
           handler: handleUserStaked
         - event: UserWithdrawn(indexed uint256,indexed address,uint256)
           handler: handleUserWithdrawn
-        - event: UserClaimLocked(indexed uint256,indexed address,uint128,uint128)
-          handler: handleUserClaimLocked
         - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
           handler: handleUserReferred
         - event: ReferrerClaimed(indexed uint256,indexed address,address,uint256)
           handler: handleReferrerClaimed
-      file: ./src/mappings/distribution.ts
+      file: ./src/mappings/DepositPool.ts
+
+  - kind: ethereum
+    name: DepositPoolLINK
+    network: "{{ network }}"
+    source:
+      address: "{{ depositPool_LINK }}"
+      abi: DepositPool
+      startBlock: { { depositPool_LINK_startBlock } }
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminChanged
+        - BeaconUpgraded
+        - Initialized
+        - Upgraded
+        - OwnershipTransferred
+        - User
+        - PoolInteraction
+        - InteractionCount
+        - UserReferrer
+        - Referrer
+      abis:
+        - name: DepositPool
+          file: ./abis/DepositPool.json
+      eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
+        - event: BeaconUpgraded(indexed address)
+          handler: handleBeaconUpgraded
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+        - event: UserClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleUserClaimed
+        - event: UserStaked(indexed uint256,indexed address,uint256)
+          handler: handleUserStaked
+        - event: UserWithdrawn(indexed uint256,indexed address,uint256)
+          handler: handleUserWithdrawn
+        - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleUserReferred
+        - event: ReferrerClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleReferrerClaimed
+      file: ./src/mappings/DepositPool.ts
