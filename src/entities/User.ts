@@ -1,7 +1,7 @@
 import { Bytes, BigInt, Address } from "@graphprotocol/graph-ts";
 import { User } from "../../generated/schema";
 
-export function getUser(address: Address, rewardPoolId: BigInt, depositPool: Address): User {
+export function getUser(address: Address, rewardPoolId: BigInt, depositPool: Bytes): User {
   let id = address.concat(depositPool).concat(Bytes.fromByteArray(Bytes.fromBigInt(rewardPoolId)));
 
   let entity = User.load(id);

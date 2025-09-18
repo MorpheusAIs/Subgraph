@@ -49,6 +49,16 @@ type OwnershipTransferred @entity(immutable: true) {
 }
 # END
 
+type DepositPool @entity {
+  "id forms from the `rewardPoolId` + `depositPool`"
+  id: Bytes!
+
+  rewardPoolId: BigInt!
+  depositPool: Bytes!
+
+  totalStaked: BigInt!
+}
+
 type User @entity {
   "id forms from the `tx.sender` + `rewardPoolId` + `depositPool`"
   id: Bytes!
@@ -61,7 +71,7 @@ type User @entity {
 }
 
 type PoolInteraction @entity(immutable: true) {
-  "id forms from tx hash + counter"
+  "id forms from the `tx.hash` + `counter`"
   id: Bytes!
 
   blockNumber: BigInt!
@@ -71,6 +81,10 @@ type PoolInteraction @entity(immutable: true) {
   user: User!
   type: BigInt!
   amount: BigInt!
+
+  depositPool: Bytes!
+  totalStaked: BigInt!
+  rate: BigInt!
 }
 
 # The entity counts interactions in single tx

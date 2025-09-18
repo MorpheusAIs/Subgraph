@@ -1,5 +1,18 @@
 {
     "network": "mainnet",
-    "distribution": "0x47176B2Af9885dC6C4575d4eFd63895f7Aaa4790",
-    "distributionStartBlock": "19178637"
+
+    "depositPool_stETH": "0x47176B2Af9885dC6C4575d4eFd63895f7Aaa4790",
+    "depositPool_stETH_startBlock": "19178638",
+
+    "depositPool_wBTC": "0xdE283F8309Fd1AA46c95d299f6B8310716277A42",
+    "depositPool_wBTC_startBlock": "23390320",
+
+    "depositPool_wETH": "0x9380d72aBbD6e0Cc45095A2Ef8c2CA87d77Cb384",
+    "depositPool_wETH_startBlock": "23390320",
+
+    "depositPool_USDC": "0x6cCE082851Add4c535352f596662521B4De4750E",
+    "depositPool_USDC_startBlock": "23390320",
+
+    "depositPool_USDT": "0x3B51989212BEdaB926794D6bf8e9E991218cf116",
+    "depositPool_USDT_startBlock": "23390320"
 }

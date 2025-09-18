@@ -1,7 +1,9 @@
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
+  DepositPool,
+  DepositPool__usersDataResult,
   Initialized as InitializedEvent,
   OwnershipTransferred as OwnershipTransferredEvent,
   ReferrerClaimed,
@@ -16,12 +18,13 @@ import { getPoolInteraction, PoolInteractionType } from "../entities/PoolInterac
 import { getReferrer } from "../entities/Referrer";
 import { getReferral } from "../entities/Referral";
 import { getUser } from "../entities/User";
+import { getDepositPool, getDepositPoolAddress } from "../entities/DepositPool";
 
 export function handleAdminChanged(event: AdminChangedEvent): void {
   let entity = new AdminChanged(event.transaction.hash.concatI32(event.logIndex.toI32()));
   entity.previousAdmin = event.params.previousAdmin;
   entity.newAdmin = event.params.newAdmin;
-  entity.depositPool = _getDepositPoolAddress(event.transaction);
+  entity.depositPool = getDepositPoolAddress(event.transaction);
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -33,7 +36,7 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   let entity = new BeaconUpgraded(event.transaction.hash.concatI32(event.logIndex.toI32()));
   entity.beacon = event.params.beacon;
-  entity.depositPool = _getDepositPoolAddress(event.transaction);
+  entity.depositPool = getDepositPoolAddress(event.transaction);
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -45,7 +48,7 @@ export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
 export function handleInitialized(event: InitializedEvent): void {
   let entity = new Initialized(event.transaction.hash.concatI32(event.logIndex.toI32()));
   entity.version = event.params.version;
-  entity.depositPool = _getDepositPoolAddress(event.transaction);
+  entity.depositPool = getDepositPoolAddress(event.transaction);
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -58,7 +61,7 @@ export function handleOwnershipTransferred(event: OwnershipTransferredEvent): vo
   let entity = new OwnershipTransferred(event.transaction.hash.concatI32(event.logIndex.toI32()));
   entity.previousOwner = event.params.previousOwner;
   entity.newOwner = event.params.newOwner;
-  entity.depositPool = _getDepositPoolAddress(event.transaction);
+  entity.depositPool = getDepositPoolAddress(event.transaction);
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -70,7 +73,7 @@ export function handleOwnershipTransferred(event: OwnershipTransferredEvent): vo
 export function handleUpgraded(event: UpgradedEvent): void {
   let entity = new Upgraded(event.transaction.hash.concatI32(event.logIndex.toI32()));
   entity.implementation = event.params.implementation;
-  entity.depositPool = _getDepositPoolAddress(event.transaction);
+  entity.depositPool = getDepositPoolAddress(event.transaction);
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -80,11 +83,14 @@ export function handleUpgraded(event: UpgradedEvent): void {
 }
 
 export function handleUserClaimed(event: UserClaimedEvent): void {
-  let depositPool = _getDepositPoolAddress(event.transaction);
+  let depositPool = getDepositPool(event.params.rewardPoolIndex, getDepositPoolAddress(event.transaction));
+  depositPool.save();
 
-  let user = getUser(event.params.user, event.params.rewardPoolIndex, depositPool);
+  let user = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
   user.claimed = user.claimed.plus(event.params.amount);
   user.save();
+
+  const userData = _getUserData(event.address, event.params.rewardPoolIndex, event.params.user);
 
   let poolInteraction = getPoolInteraction(
     event.transaction.hash,
@@ -92,17 +98,24 @@ export function handleUserClaimed(event: UserClaimedEvent): void {
     user,
     PoolInteractionType.CLAIM,
     event.params.amount,
+    depositPool.totalStaked,
+    userData.getRate(),
   );
 
   poolInteraction.save();
 }
 
 export function handleUserStaked(event: UserStakedEvent): void {
-  let depositPool = _getDepositPoolAddress(event.transaction);
+  let depositPool = getDepositPool(event.params.rewardPoolIndex, getDepositPoolAddress(event.transaction));
 
-  let user = getUser(event.params.user, event.params.rewardPoolIndex, depositPool);
+  let user = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
   user.staked = user.staked.plus(event.params.amount);
   user.save();
+
+  depositPool.totalStaked = depositPool.totalStaked.plus(event.params.amount);
+  depositPool.save();
+
+  const userData = _getUserData(event.address, event.params.rewardPoolIndex, event.params.user);
 
   let poolInteraction = getPoolInteraction(
     event.transaction.hash,
@@ -110,17 +123,24 @@ export function handleUserStaked(event: UserStakedEvent): void {
     user,
     PoolInteractionType.STAKE,
     event.params.amount,
+    depositPool.totalStaked,
+    userData.getRate(),
   );
 
   poolInteraction.save();
 }
 
 export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
-  let depositPool = _getDepositPoolAddress(event.transaction);
+  let depositPool = getDepositPool(event.params.rewardPoolIndex, getDepositPoolAddress(event.transaction));
 
-  let user = getUser(event.params.user, event.params.rewardPoolIndex, depositPool);
+  let user = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
   user.staked = user.staked.minus(event.params.amount);
   user.save();
+
+  depositPool.totalStaked = depositPool.totalStaked.minus(event.params.amount);
+  depositPool.save();
+
+  const userData = _getUserData(event.address, event.params.rewardPoolIndex, event.params.user);
 
   let poolInteraction = getPoolInteraction(
     event.transaction.hash,
@@ -128,21 +148,24 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
     user,
     PoolInteractionType.WITHDRAW,
     event.params.amount,
+    depositPool.totalStaked,
+    userData.getRate(),
   );
 
   poolInteraction.save();
 }
 
 export function handleUserReferred(event: UserReferredEvent): void {
-  let depositPool = _getDepositPoolAddress(event.transaction);
+  let depositPool = getDepositPool(event.params.rewardPoolIndex, getDepositPoolAddress(event.transaction));
+  depositPool.save();
 
-  let referrerUser = getUser(event.params.user, event.params.rewardPoolIndex, depositPool);
+  let referrerUser = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
   referrerUser.save();
 
   let referrer = getReferrer(referrerUser);
   referrer.save();
 
-  let referralUser = getUser(event.params.referrer, event.params.rewardPoolIndex, depositPool);
+  let referralUser = getUser(event.params.referrer, event.params.rewardPoolIndex, depositPool.depositPool);
   referralUser.save();
 
   let referral = getReferral(referralUser, referrer);
@@ -151,9 +174,10 @@ export function handleUserReferred(event: UserReferredEvent): void {
 }
 
 export function handleReferrerClaimed(event: ReferrerClaimed): void {
-  let depositPool = _getDepositPoolAddress(event.transaction);
+  let depositPool = getDepositPool(event.params.rewardPoolIndex, getDepositPoolAddress(event.transaction));
+  depositPool.save();
 
-  let referrerUser = getUser(event.params.user, event.params.rewardPoolIndex, depositPool);
+  let referrerUser = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
   referrerUser.save();
 
   let referrer = getReferrer(referrerUser);
@@ -161,10 +185,76 @@ export function handleReferrerClaimed(event: ReferrerClaimed): void {
   referrer.save();
 }
 
-function _getDepositPoolAddress(transaction: ethereum.Transaction): Address {
-  if (transaction.to !== null) {
-    return changetype<Address>(transaction.to);
+function _getUserData(address: Address, poolId: BigInt, user: Address): DepositPool__usersDataResult {
+  const depositPool = DepositPool.bind(address);
+  const versionData = depositPool.try_version();
+  const version = versionData.reverted ? new BigInt(1) : versionData.value;
+
+  const signatures = [
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v7
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v5
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128)", // v4
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // v3
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // v2
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256)", // v1
+  ];
+
+  const versions: i32[] = [7, 5, 4, 3, 2, 1];
+
+  let signature: string | null = null;
+
+  for (let i = 0; i < versions.length; i++) {
+    if (versions[i] == version.toI32()) {
+      signature = signatures[i];
+      break;
+    }
   }
 
-  return Address.zero();
+  if (signature !== null) {
+    const result = _callUsersData(depositPool, user, poolId, signature);
+
+    if (result !== null) {
+      return result;
+    }
+  }
+
+  return new DepositPool__usersDataResult(
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    BigInt.zero(),
+    Address.zero(),
+  );
+}
+
+function _callUsersData(
+  depositPool: DepositPool,
+  user: Address,
+  poolId: BigInt,
+  signature: string,
+): DepositPool__usersDataResult | null {
+  const result = depositPool.tryCall("usersData", signature, [
+    ethereum.Value.fromAddress(user),
+    ethereum.Value.fromUnsignedBigInt(poolId),
+  ]);
+
+  if (!result.reverted) {
+    return new DepositPool__usersDataResult(
+      result.value[0].toBigInt(),
+      result.value[1].toBigInt(),
+      result.value[2].toBigInt(),
+      result.value[3].toBigInt(),
+      BigInt.zero(),
+      BigInt.zero(),
+      BigInt.zero(),
+      BigInt.zero(),
+      Address.zero(),
+    );
+  }
+
+  return null;
 }

@@ -5,12 +5,12 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: DepositPoolStETH
+    name: DepositPool_stETH
     network: "{{ network }}"
     source:
       address: "{{ depositPool_stETH }}"
       abi: DepositPool
-      startBlock: { { depositPool_stETH_startBlock } }
+      startBlock: +{{ depositPool_stETH_startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -53,12 +53,156 @@ dataSources:
       file: ./src/mappings/DepositPool.ts
 
   - kind: ethereum
-    name: DepositPoolLINK
+    name: DepositPool_wBTC
     network: "{{ network }}"
     source:
-      address: "{{ depositPool_LINK }}"
+      address: "{{ depositPool_wBTC }}"
       abi: DepositPool
-      startBlock: { { depositPool_LINK_startBlock } }
+      startBlock: +{{ depositPool_wBTC_startBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminChanged
+        - BeaconUpgraded
+        - Initialized
+        - Upgraded
+        - OwnershipTransferred
+        - User
+        - PoolInteraction
+        - InteractionCount
+        - UserReferrer
+        - Referrer
+      abis:
+        - name: DepositPool
+          file: ./abis/DepositPool.json
+      eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
+        - event: BeaconUpgraded(indexed address)
+          handler: handleBeaconUpgraded
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+        - event: UserClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleUserClaimed
+        - event: UserStaked(indexed uint256,indexed address,uint256)
+          handler: handleUserStaked
+        - event: UserWithdrawn(indexed uint256,indexed address,uint256)
+          handler: handleUserWithdrawn
+        - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleUserReferred
+        - event: ReferrerClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleReferrerClaimed
+      file: ./src/mappings/DepositPool.ts
+
+  - kind: ethereum
+    name: DepositPool_wETH
+    network: "{{ network }}"
+    source:
+      address: "{{ depositPool_wETH }}"
+      abi: DepositPool
+      startBlock: +{{ depositPool_wETH_startBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminChanged
+        - BeaconUpgraded
+        - Initialized
+        - Upgraded
+        - OwnershipTransferred
+        - User
+        - PoolInteraction
+        - InteractionCount
+        - UserReferrer
+        - Referrer
+      abis:
+        - name: DepositPool
+          file: ./abis/DepositPool.json
+      eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
+        - event: BeaconUpgraded(indexed address)
+          handler: handleBeaconUpgraded
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+        - event: UserClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleUserClaimed
+        - event: UserStaked(indexed uint256,indexed address,uint256)
+          handler: handleUserStaked
+        - event: UserWithdrawn(indexed uint256,indexed address,uint256)
+          handler: handleUserWithdrawn
+        - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleUserReferred
+        - event: ReferrerClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleReferrerClaimed
+      file: ./src/mappings/DepositPool.ts
+
+  - kind: ethereum
+    name: DepositPool_USDC
+    network: "{{ network }}"
+    source:
+      address: "{{ depositPool_USDC }}"
+      abi: DepositPool
+      startBlock: +{{ depositPool_USDC_startBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminChanged
+        - BeaconUpgraded
+        - Initialized
+        - Upgraded
+        - OwnershipTransferred
+        - User
+        - PoolInteraction
+        - InteractionCount
+        - UserReferrer
+        - Referrer
+      abis:
+        - name: DepositPool
+          file: ./abis/DepositPool.json
+      eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
+        - event: BeaconUpgraded(indexed address)
+          handler: handleBeaconUpgraded
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+        - event: UserClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleUserClaimed
+        - event: UserStaked(indexed uint256,indexed address,uint256)
+          handler: handleUserStaked
+        - event: UserWithdrawn(indexed uint256,indexed address,uint256)
+          handler: handleUserWithdrawn
+        - event: UserReferred(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleUserReferred
+        - event: ReferrerClaimed(indexed uint256,indexed address,address,uint256)
+          handler: handleReferrerClaimed
+      file: ./src/mappings/DepositPool.ts
+
+  - kind: ethereum
+    name: DepositPool_USDT
+    network: "{{ network }}"
+    source:
+      address: "{{ depositPool_USDT }}"
+      abi: DepositPool
+      startBlock: +{{ depositPool_USDT_startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
