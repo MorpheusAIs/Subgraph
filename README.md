@@ -10,11 +10,11 @@ This is the graph for Morpheus Smart Contracts.
 - `npx graph deploy --studio YOUR_STUDIO_NAME`
 
 
-npm run prepare:ethereum-sepolia && npm run codegen && npm run build && npx graph deploy capital-v2-testnet \
-  --version-label v0.0.1 \
+npm run prepare:ethereum-mainnet && npm run codegen && npm run build && npx graph deploy morpheus-mainnet-v-2 \
+  --version-label v0.0.1-new-version \
   --node https://subgraphs.alchemy.com/api/subgraphs/deploy \
   --deploy-key eUWBRZLfXuDPj \
   --ipfs https://ipfs.satsuma.xyz
 
 npm run prepare:ethereum-mainnet && npm run codegen && npm run build
-npx graph deploy morpheus-mainnet-v-2
+npm run prepare:ethereum-mainnet && npm run codegen && npm run build && npx graph deploy morpheus-mainnet-v-2

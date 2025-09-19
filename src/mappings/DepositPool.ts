@@ -191,27 +191,18 @@ function _getUserData(address: Address, poolId: BigInt, user: Address): DepositP
   const version = versionData.reverted ? new BigInt(1) : versionData.value;
 
   const signatures = [
-    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v7
-    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v5
-    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128)", // v4
-    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // v3
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256)", // v0. When version call return none (e.g. 0)
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256)", // v1. The same as v0
     "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // v2
-    "usersData(address,uint256):(uint128,uint256,uint256,uint256)", // v1
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256)", // v3
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128)", // v4
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v5
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v6 - not deployed
+    "usersData(address,uint256):(uint128,uint256,uint256,uint256,uint128,uint128,uint256,uint128,address)", // v7
   ];
 
-  const versions: i32[] = [7, 5, 4, 3, 2, 1];
-
-  let signature: string | null = null;
-
-  for (let i = 0; i < versions.length; i++) {
-    if (versions[i] == version.toI32()) {
-      signature = signatures[i];
-      break;
-    }
-  }
-
-  if (signature !== null) {
-    const result = _callUsersData(depositPool, user, poolId, signature);
+  if (signatures.length + 1 > version.toI32()) {
+    const result = _callUsersData(depositPool, user, poolId, signatures[version.toI32()]);
 
     if (result !== null) {
       return result;

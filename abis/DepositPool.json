@@ -921,6 +921,86 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "usersData",
+    "outputs": [
+      { "internalType": "uint128", "name": "lastStake", "type": "uint128" },
+      { "internalType": "uint256", "name": "deposited", "type": "uint256" },
+      { "internalType": "uint256", "name": "rate", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "pendingRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint128",
+        "name": "claimLockStart",
+        "type": "uint128"
+      },
+      { "internalType": "uint128", "name": "claimLockEnd", "type": "uint128" },
+      {
+        "internalType": "uint256",
+        "name": "virtualDeposited",
+        "type": "uint256"
+      },
+      { "internalType": "uint128", "name": "lastClaim", "type": "uint128" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "usersData",
+    "outputs": [
+      { "internalType": "uint128", "name": "lastStake", "type": "uint128" },
+      { "internalType": "uint256", "name": "deposited", "type": "uint256" },
+      { "internalType": "uint256", "name": "rate", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "pendingRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint128",
+        "name": "claimLockStart",
+        "type": "uint128"
+      },
+      { "internalType": "uint128", "name": "claimLockEnd", "type": "uint128" },
+      {
+        "internalType": "uint256",
+        "name": "virtualDeposited",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "usersData",
+    "outputs": [
+      { "internalType": "uint128", "name": "lastStake", "type": "uint128" },
+      { "internalType": "uint256", "name": "deposited", "type": "uint256" },
+      { "internalType": "uint256", "name": "rate", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "pendingRewards",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "version",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
