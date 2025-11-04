@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { BigInt } from "@graphprotocol/graph-ts";
 import { Referrer, User } from "../../generated/schema";
 
 export function getReferrer(user: User): Referrer {

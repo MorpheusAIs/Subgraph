@@ -83,6 +83,7 @@ type PoolInteraction @entity(immutable: true) {
   amount: BigInt!
 
   depositPool: Bytes!
+  rewardPoolId: BigInt!
   totalStaked: BigInt!
   rate: BigInt!
 }

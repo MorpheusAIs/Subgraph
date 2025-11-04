@@ -112,7 +112,7 @@ export function handleUserStaked(event: UserStakedEvent): void {
   user.staked = user.staked.plus(event.params.amount);
   user.save();
 
-  depositPool.totalStaked = depositPool.totalStaked.plus(event.params.amount);
+  depositPool.totalStaked = _getTotalDepositedInPublicPools(event.address);
   depositPool.save();
 
   const userData = _getUserData(event.address, event.params.rewardPoolIndex, event.params.user);
@@ -137,7 +137,7 @@ export function handleUserWithdrawn(event: UserWithdrawnEvent): void {
   user.staked = user.staked.minus(event.params.amount);
   user.save();
 
-  depositPool.totalStaked = depositPool.totalStaked.minus(event.params.amount);
+  depositPool.totalStaked = _getTotalDepositedInPublicPools(event.address);
   depositPool.save();
 
   const userData = _getUserData(event.address, event.params.rewardPoolIndex, event.params.user);
@@ -159,14 +159,14 @@ export function handleUserReferred(event: UserReferredEvent): void {
   let depositPool = getDepositPool(event.params.rewardPoolIndex, getDepositPoolAddress(event.transaction));
   depositPool.save();
 
-  let referrerUser = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
-  referrerUser.save();
+  let referralUser = getUser(event.params.user, event.params.rewardPoolIndex, depositPool.depositPool);
+  referralUser.save();
+
+  let referrerUser = getUser(event.params.referrer, event.params.rewardPoolIndex, depositPool.depositPool);
+  referralUser.save();
 
   let referrer = getReferrer(referrerUser);
   referrer.save();
-
-  let referralUser = getUser(event.params.referrer, event.params.rewardPoolIndex, depositPool.depositPool);
-  referralUser.save();
 
   let referral = getReferral(referralUser, referrer);
   referral.amount = event.params.amount;
@@ -248,4 +248,10 @@ function _callUsersData(
   }
 
   return null;
+}
+
+function _getTotalDepositedInPublicPools(address: Address): BigInt {
+  const depositPool = DepositPool.bind(address);
+
+  return depositPool.totalDepositedInPublicPools();
 }

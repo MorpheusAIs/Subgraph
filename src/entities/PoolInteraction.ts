@@ -35,6 +35,7 @@ export function getPoolInteraction(
     interaction.amount = amount;
 
     interaction.depositPool = user.depositPool;
+    interaction.rewardPoolId = user.rewardPoolId;
     interaction.totalStaked = totalStaked;
     interaction.rate = rate;
 
