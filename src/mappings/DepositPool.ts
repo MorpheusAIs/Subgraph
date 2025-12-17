@@ -36,11 +36,15 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   let entity = new BeaconUpgraded(event.transaction.hash.concatI32(event.logIndex.toI32()));
   entity.beacon = event.params.beacon;
-  entity.depositPool = getDepositPoolAddress(event.transaction);
-
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
+
+  if (event.transaction !== null) {
+    entity.depositPool = changetype<Address>(event.transaction.to);
+  } else {
+    entity.depositPool = Address.zero();
+  }
 
   entity.save();
 }

@@ -1,4 +1,3 @@
-# START proxy entities
 type AdminChanged @entity(immutable: true) {
   id: Bytes!
   blockNumber: BigInt!
